@@ -20,6 +20,8 @@ export default function handler(
       return updateEntry(req, res, id as string);
     case 'GET':
       return getEntry(res, id as string);
+    case 'DELETE':
+      return deleteEntry(res, id as string);
     default:
       return res.status(405).json({ message: 'Method not allowed' });
   }
@@ -85,3 +87,23 @@ const getEntry = async (res: NextApiResponse<Data>, id: string) => {
     res.status(500).json({ message: 'Something went wrong' });
   }
 };
+
+const deleteEntry = async (res: NextApiResponse<Data>, id: string) => {
+  try {
+    await db.connect();
+    const deletedEntry = await Entry.findByIdAndDelete(id);
+    await db.disconnect();
+
+    if (!deletedEntry) {
+      return res
+        .status(404)
+        .json({ message: `Entry with ID: ${id} not found` });
+    }
+
+    res.status(200).json(deletedEntry);
+  } catch (error) {
+    console.error(error);
+    await db.disconnect();
+    res.status(500).json({ message: 'Something went wrong' });
+  }
+}
